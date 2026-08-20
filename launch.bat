@@ -1,7 +1,5 @@
 @echo off
-cd /d "%~dp0"
-set "PY=%~dp0.venv\Scripts\python.exe"
-if not exist "%PY%" set "PY=python"
+cd /d D:\claude\tw-stock-scanner
 echo === 台股掃描器啟動中 ===
 
 :: Kill old processes
@@ -10,7 +8,7 @@ for /f "tokens=2" %%i in ('tasklist ^| findstr /i "python"') do taskkill /F /PID
 timeout /t 2 /nobreak >nul
 
 :: Start watchdog via PowerShell (truly detached, survives terminal close)
-powershell -Command "Start-Process -FilePath '%PY%' -ArgumentList 'watchdog.py' -WorkingDirectory '%~dp0' -WindowStyle Minimized"
+powershell -Command "Start-Process -FilePath 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' -ArgumentList 'watchdog.py' -WorkingDirectory 'D:\claude\tw-stock-scanner' -WindowStyle Minimized"
 
 echo Watchdog launched, waiting for services...
 timeout /t 15 /nobreak >nul

@@ -15,9 +15,26 @@ logger = logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# ===== 載入 .env（統一放在 config，讓所有進入點共用）=====
-from config import load_dotenv
-load_dotenv()
+# ===== 載入 .env (若存在),不依賴外部套件 =====
+def _load_dotenv():
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if not os.path.isfile(env_path):
+        return
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, _, v = line.partition('=')
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k and k not in os.environ:
+                    os.environ[k] = v
+    except Exception as e:
+        logger.warning(f".env 載入失敗: {e}")
+
+_load_dotenv()
 
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 from flask_httpauth import HTTPBasicAuth
@@ -262,7 +279,7 @@ def index():
 
 
 # ===== 產業研究 =====
-RESEARCH_DIR = os.environ.get('RESEARCH_DIR') or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'research')
+RESEARCH_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'research')
 
 @app.route('/research')
 def research_list():
@@ -455,7 +472,7 @@ def api_research(filepath):
 
 
 # ===== 每日券商報告 =====
-BROKER_REPORTS_DIR = os.environ.get('BROKER_REPORTS_DIR', r'P:\2026年報告')
+BROKER_REPORTS_DIR = r'P:\2026年報告'
 BROKER_RATING_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'broker_ratings.json')
 MAX_EXTRACT_PER_REQ = 80
 
@@ -3594,9 +3611,7 @@ def weekly():
     """研究週報頁面 — 自動彙整量化研究與科技研究週報。"""
     import glob, re
 
-    base_src = os.environ.get('RESEARCH_SRC_DIR', '')
-    if not base_src or not os.path.isdir(base_src):
-        base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
+    base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
     if not os.path.isdir(base_src):
         base_src = r'D:\claude\src'
 
@@ -3790,9 +3805,7 @@ def weekly():
 def api_weekly_report(filepath):
     """動態載入週報 HTML 內容。"""
     import re
-    base_src = os.environ.get('RESEARCH_SRC_DIR', '')
-    if not base_src or not os.path.isdir(base_src):
-        base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
+    base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
     if not os.path.isdir(base_src):
         base_src = r'D:\claude\src'
 

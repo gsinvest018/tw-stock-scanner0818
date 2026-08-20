@@ -1,6 +1,4 @@
 @echo off
-cd /d "%~dp0"
-set "PY=%~dp0.venv\Scripts\python.exe"
-if not exist "%PY%" set "PY=python"
+cd /d D:\claude\tw-stock-scanner
 taskkill /F /IM ngrok.exe 2>nul
-"%PY%" watchdog.py
+"C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe" watchdog.py

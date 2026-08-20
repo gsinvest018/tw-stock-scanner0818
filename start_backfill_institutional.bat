@@ -9,14 +9,12 @@ REM 預估時間: 約 6 小時 (取決於網路與 API 反應)
 REM   - 跑到一半關掉沒關係，下次接續跑
 REM   - 視窗請保持開啟，不要登出 Windows
 REM ============================================================
-cd /d "%~dp0"
-set "PY=%~dp0.venv\Scripts\python.exe"
-if not exist "%PY%" set "PY=python"
+cd /d D:\claude\tw-stock-scanner
 
 echo.
 echo ====== Step 1/2: 回補 institutional 資料 ======
 echo.
-"%PY%" backfill_institutional.py
+python backfill_institutional.py
 if errorlevel 1 (
     echo.
     echo [!] 回補階段失敗，停止
@@ -27,7 +25,7 @@ if errorlevel 1 (
 echo.
 echo ====== Step 2/2: 匯出乾淨資料包 ======
 echo.
-"%PY%" export_institutional.py
+python export_institutional.py
 if errorlevel 1 (
     echo.
     echo [!] 匯出失敗
@@ -37,6 +35,6 @@ if errorlevel 1 (
 
 echo.
 echo ====== 全部完成 ======
-echo 資料包位置: %~dp0data\
+echo 資料包位置: D:\claude\tw-stock-scanner\data\
 echo.
 pause

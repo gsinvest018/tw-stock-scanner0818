@@ -10,9 +10,8 @@
 import os, sys, logging, time, sqlite3
 from datetime import datetime, timedelta
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, PROJECT_DIR)
-os.chdir(PROJECT_DIR)
+sys.path.insert(0, r'D:\claude\tw-stock-scanner')
+os.chdir(r'D:\claude\tw-stock-scanner')
 
 DAYS = 250
 for arg in sys.argv[1:]:

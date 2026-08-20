@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}注意/處置股風險預測{% endblock %}
+
+{% block content %}
+<div class="content-area">
+  <h4 class="page-title">注意/處置股 — 風險預測雷達</h4>
+
+  <div class="filter-bar">
+    <form method="GET" action="/disposition" class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="filter-group">
+        <label>市場</label>
+        <select name="market" class="form-control" style="width:120px;">
+          <option value="all"  {% if market == 'all'  %}selected{% endif %}>全部</option>
+          <option value="twse" {% if market == 'twse' %}selected{% endif %}>上市</option>
+          <option value="tpex" {% if market == 'tpex' %}selected{% endif %}>上櫃</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>顯示前 N 名</label>
+        <select name="top" class="form-control" style="width:100px;">
+          <option value="50"  {% if top_n == 50  %}selected{% endif %}>50</option>
+          <option value="100" {% if top_n == 100 %}selected{% endif %}>100</option>
+          <option value="200" {% if top_n == 200 %}selected{% endif %}>200</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">查詢</button>
+    </form>
+  </div>
+
+  {% if message %}<div class="alert alert-warning m-3">{{ message }}</div>{% endif %}
+
+  <div class="result-summary">
+    資料截止: {{ scan.as_of_date or '—' }}
+    | 目前處置中: <strong style="color:#ef4444;">{{ scan.active_count or 0 }} 檔</strong>
+    | 規則:
+    R1=6日累積±32%,
+    R2=單日±10%,
+    R3=量能異常,
+    R4=連3日同向±18%
+    <br>
+    <span style="color:#94a3b8;font-size:12px;">
+      ⚠️ 本系統為歷史回測規則引擎,實際處置與否由證交所最終裁量,僅供風險參考。
+    </span>
+  </div>
+
+  <div class="alert" style="margin:16px 0;background:#1e293b;border-left:3px solid #f59e0b;padding:12px;font-size:13px;">
+    💡 想找「漲多被處置 × 處置期間從高點跌破 30%」的反彈選股 → 看
+    <a href="/disposition-bounce" style="color:#f59e0b;font-weight:bold;">處置反彈訊號</a>
+  </div>
+
+  <!-- 目前處置中 -->
+  {% if actives %}
+  <h5 style="margin-top:16px;color:#ef4444;">🚨 目前處置中 ({{ actives|length }} 檔)</h5>
+  <div class="table-responsive">
+    <table class="table table-sm data-table mb-0">
+      <thead><tr>
+        <th>代號</th><th>名稱</th><th>處置條件</th>
+        <th>處置區間</th><th>第幾次</th>
+      </tr></thead>
+      <tbody>
+      {% for r in actives %}
+        <tr>
+          <td><a href="/stock?id={{ r.stock_id }}">{{ r.stock_id }}</a></td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.condition }}</td>
+          <td>{{ r.period_start }} ~ {{ r.period_end }}</td>
+          <td>{{ r.action }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- 風險分數排行 -->
+  <h5 style="margin-top:16px;">📊 規則觸發接近度排行 (前 {{ scan.results|length }} 名)</h5>
+  <div class="table-responsive">
+    <table class="table table-sm data-table mb-0">
+      <thead><tr>
+        <th>代號</th><th>名稱</th><th>市場</th>
+        <th class="text-end">收盤</th>
+        <th class="text-end">單日</th>
+        <th class="text-end">6日累積</th>
+        <th class="text-end">量能</th>
+        <th class="text-end">分數</th>
+        <th>觸發</th>
+      </tr></thead>
+      <tbody>
+      {% for r in scan.results %}
+        <tr {% if r.in_disposition %}style="background:#3a1212;"{% elif r.score >= 60 %}style="background:#3a2812;"{% endif %}>
+          <td><a href="/stock?id={{ r.stock_id }}">{{ r.stock_id }}</a></td>
+          <td>{{ r.name }}</td>
+          <td>{{ '上市' if r.market == 'twse' else '上櫃' }}</td>
+          <td class="text-end">{{ '%.2f'|format(r.close_price) if r.close_price else '—' }}</td>
+          <td class="text-end {% if r.last_change > 0 %}text-danger{% elif r.last_change < 0 %}text-success{% endif %}">
+            {{ '%+.2f'|format(r.last_change) }}%
+          </td>
+          <td class="text-end {% if r.cum_pct_6d > 0 %}text-danger{% elif r.cum_pct_6d < 0 %}text-success{% endif %}">
+            {{ '%+.1f'|format(r.cum_pct_6d) }}%
+          </td>
+          <td class="text-end">{{ r.vol_ratio ~ 'x' if r.vol_ratio else '—' }}</td>
+          <td class="text-end fw-bold {% if r.score >= 80 %}text-danger{% elif r.score >= 60 %}text-warning{% endif %}">
+            {{ '%.0f'|format(r.score) }}
+          </td>
+          <td>
+            {% if r.in_disposition %}<span class="badge" style="background:#ef4444;">處置中</span>{% endif %}
+            {% for h in r.hits %}<span class="badge" style="background:#475569;font-size:10px;margin:1px;">{{ h }}</span>{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 近 30 天歷史 -->
+  <div class="row" style="margin-top:24px;">
+    <div class="col-md-6">
+      <h5>📌 近 30 天注意股 ({{ recent_notices|length }})</h5>
+      <div class="table-responsive">
+        <table class="table table-sm data-table mb-0">
+          <thead><tr>
+            <th>日期</th><th>代號</th><th>名稱</th><th>累計</th><th>原因</th>
+          </tr></thead>
+          <tbody>
+          {% for r in recent_notices[:25] %}
+            <tr>
+              <td>{{ r.announce_date }}</td>
+              <td><a href="/stock?id={{ r.stock_id }}">{{ r.stock_id }}</a></td>
+              <td>{{ r.name }}</td>
+              <td>{{ r.cumulative }}</td>
+              <td style="font-size:11px;color:#94a3b8;">{{ r.reason[:60] }}{% if r.reason|length > 60 %}…{% endif %}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center" style="padding:20px;color:#94a3b8;">無資料</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <h5 style="color:#ef4444;">🚨 近 30 天處置股 ({{ recent_punish|length }})</h5>
+      <div class="table-responsive">
+        <table class="table table-sm data-table mb-0">
+          <thead><tr>
+            <th>公布</th><th>代號</th><th>名稱</th><th>第幾次</th><th>處置區間</th>
+          </tr></thead>
+          <tbody>
+          {% for r in recent_punish[:25] %}
+            <tr>
+              <td>{{ r.announce_date }}</td>
+              <td><a href="/stock?id={{ r.stock_id }}">{{ r.stock_id }}</a></td>
+              <td>{{ r.name }}</td>
+              <td>{{ r.action }}</td>
+              <td style="font-size:12px;">{{ r.period_start }}<br>~ {{ r.period_end }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center" style="padding:20px;color:#94a3b8;">無資料</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

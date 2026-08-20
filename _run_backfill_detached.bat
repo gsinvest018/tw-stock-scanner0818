@@ -1,4 +1,6 @@
 @echo off
-cd /d D:\claude\tw-stock-scanner
+cd /d "%~dp0"
+set "PY=%~dp0.venv\Scripts\python.exe"
+if not exist "%PY%" set "PY=python"
 title TW-Backfill-Institutional
-python backfill_institutional.py
+"%PY%" backfill_institutional.py

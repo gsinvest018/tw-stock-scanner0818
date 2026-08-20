@@ -15,7 +15,11 @@ import logging
 import sys
 
 from models.database import get_conn, upsert_regime
-from scanners.regime import get_market_temperature
+
+try:
+    from scanners.regime import get_market_temperature
+except ImportError:
+    sys.exit('找不到 regime-detector 外部專案（可設 REGIME_DETECTOR_DIR 環境變數指定位置），無法回灌 regime')
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)

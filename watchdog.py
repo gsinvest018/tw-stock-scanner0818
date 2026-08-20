@@ -4,8 +4,10 @@
 子進程用 DETACHED_PROCESS 啟動，不依附 watchdog
 """
 import subprocess
+import sys
 import time
 import os
+import shutil
 import logging
 from datetime import datetime
 import requests
@@ -23,10 +25,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-PYTHON = r"C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe"
-NGROK = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe"
-PROJECT_DIR = r"D:\claude\tw-stock-scanner"
-NGROK_DOMAIN = "alethia-unservable-detailedly.ngrok-free.dev"
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, PROJECT_DIR)
+from config import load_dotenv  # noqa: E402
+load_dotenv()
+
+PYTHON = sys.executable
+NGROK = os.environ.get("NGROK_EXE", "ngrok")  # 未設定時從 PATH 尋找
+NGROK_DOMAIN = os.environ.get("NGROK_DOMAIN", "")  # 空值 = ngrok 隨機網址
+NGROK_ENABLED = shutil.which(NGROK) is not None
 
 # DETACHED_PROCESS: 子進程完全獨立，watchdog 死了也不影響
 DETACHED = 0x00000008
@@ -92,15 +99,18 @@ def start_ngrok():
     logger.info("啟動 ngrok...")
     kill_ngrok()
     time.sleep(2)
+    cmd = [NGROK, "http", "5000"]
+    if NGROK_DOMAIN:
+        cmd = [NGROK, "http", f"--url={NGROK_DOMAIN}", "5000"]
     subprocess.Popen(
-        [NGROK, "http", f"--url={NGROK_DOMAIN}", "5000"],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         creationflags=DETACHED,
     )
     time.sleep(5)
     if is_ngrok_running():
-        logger.info(f"ngrok 啟動成功: https://{NGROK_DOMAIN}")
+        logger.info(f"ngrok 啟動成功: https://{NGROK_DOMAIN or '(隨機網址，見 http://127.0.0.1:4040)'}")
     else:
         logger.error("ngrok 啟動失敗")
 
@@ -178,7 +188,9 @@ def main():
     else:
         logger.info("Flask 已在運行")
 
-    if not is_ngrok_running():
+    if not NGROK_ENABLED:
+        logger.info("找不到 ngrok 執行檔（NGROK_EXE 未設定且 PATH 查無），略過對外通道")
+    elif not is_ngrok_running():
         start_ngrok()
     else:
         logger.info("ngrok 已在運行")
@@ -199,7 +211,7 @@ def main():
                 logger.warning("Flask 掛了，重啟...")
                 start_flask()
 
-            if not is_ngrok_running():
+            if NGROK_ENABLED and not is_ngrok_running():
                 ngrok_fail_count += 1
                 if ngrok_fail_count >= 2:
                     logger.warning(f"ngrok 掛了（連續 {ngrok_fail_count} 次），重啟...")

@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-set "LOG=D:\claude\tw-stock-scanner\autostart.log"
-set "PYW=C:\Users\User\AppData\Local\Programs\Python\Python312\pythonw.exe"
-set "PRJ=D:\claude\tw-stock-scanner"
+set "LOG=%~dp0autostart.log"
+set "PYW=%~dp0.venv\Scripts\pythonw.exe"
+set "PRJ=%~dp0"
 
 echo [%date% %time%] === autostart triggered ===>>"%LOG%"
 
@@ -13,10 +13,7 @@ if not errorlevel 1 (
     exit /b 0
 )
 
-if not exist "%PYW%" (
-    echo [%date% %time%] ERROR pythonw not found at %PYW%>>"%LOG%"
-    exit /b 1
-)
+if not exist "%PYW%" set "PYW=pythonw"
 
 cd /d "%PRJ%"
 if errorlevel 1 (

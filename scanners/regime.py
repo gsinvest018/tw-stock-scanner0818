@@ -4,14 +4,16 @@ import sys
 import numpy as np
 import pandas as pd
 
-# 加入 regime-detector 路徑
-# tw-stock-scanner/scanners/regime.py → tw-stock-scanner/ → d:\claude\
+# 加入 regime-detector 路徑：優先環境變數，其次專案同層的 src/regime-detector
+# tw-stock-scanner/scanners/regime.py → tw-stock-scanner/ → 上層/
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))        # scanners/
 _SCANNER_ROOT = os.path.dirname(_THIS_DIR)                     # tw-stock-scanner/
-_CLAUDE_ROOT = os.path.dirname(_SCANNER_ROOT)                  # d:\claude\
-REGIME_DIR = os.path.join(_CLAUDE_ROOT, 'src', 'regime-detector')
+_PARENT_ROOT = os.path.dirname(_SCANNER_ROOT)                  # 上層目錄
+REGIME_DIR = os.environ.get('REGIME_DETECTOR_DIR', '')
+if not REGIME_DIR or not os.path.isdir(REGIME_DIR):
+    REGIME_DIR = os.path.join(_PARENT_ROOT, 'src', 'regime-detector')
 if not os.path.isdir(REGIME_DIR):
-    # fallback: 直接用絕對路徑
+    # fallback: 原開發機的絕對路徑
     REGIME_DIR = r'D:\claude\src\regime-detector'
 sys.path.insert(0, REGIME_DIR)
 

@@ -1,7 +1,33 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'db', 'scanner.db')
+
+
+# ===== 載入 .env (若存在)，不依賴外部套件；不覆蓋既有環境變數 =====
+def load_dotenv():
+    env_path = os.path.join(BASE_DIR, '.env')
+    if not os.path.isfile(env_path):
+        return
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, _, v = line.partition('=')
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k and k not in os.environ:
+                    os.environ[k] = v
+    except Exception as e:
+        logger.warning(f".env 載入失敗: {e}")
+
+
+load_dotenv()
 
 # TWSE 上市
 TWSE_DAILY_URL = 'https://www.twse.com.tw/exchangeReport/MI_INDEX'

@@ -1,8 +1,7 @@
 """Stable server launcher - no debug, no reloader"""
 import sys, os
 
-# Use hardcoded path to avoid __file__ issues with different launch methods
-PROJECT_DIR = r'D:\claude\tw-stock-scanner'
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_DIR)
 os.chdir(PROJECT_DIR)
 

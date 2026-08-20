@@ -9,3 +9,7 @@ db/*.lock
 .env
 *.log
 log/
+
+# 大型資料包與爬蟲除錯樣本：留在本機、不進版控
+data.7z
+debug_broker.html

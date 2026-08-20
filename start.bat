@@ -1,9 +1,11 @@
 @echo off
-cd /d D:\claude\tw-stock-scanner
+cd /d "%~dp0"
+set "PY=%~dp0.venv\Scripts\python.exe"
+if not exist "%PY%" set "PY=python"
 
 :: 先背景補抓缺少的資料
-start /b "" "C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe" auto_update.py
+start /b "" "%PY%" auto_update.py
 
 :: 啟動網站 + 開瀏覽器
 start "" http://127.0.0.1:5000
-"C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe" app.py
+"%PY%" app.py

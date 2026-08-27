@@ -330,7 +330,7 @@ def main():
     if datetime.now().weekday() == 0:  # Monday
         logger.info("--- 產業分類更新（週一） ---")
         try:
-            from app import populate_sectors
+            from webapp.shared import populate_sectors
             populate_sectors()
             logger.info("產業分類: 更新完成 ✓")
         except Exception as e:

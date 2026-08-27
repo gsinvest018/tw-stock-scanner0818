@@ -30,6 +30,17 @@ from webapp.core import app, auth, limiter
 
 RESEARCH_DIR = os.environ.get('RESEARCH_DIR') or os.path.join(BASE_DIR, 'research')
 
+# 研究週報來源：RESEARCH_SRC_DIR 環境變數優先，否則用專案上層的 src/
+def _weekly_src_dir():
+    d = os.environ.get('RESEARCH_SRC_DIR', '')
+    if d and os.path.isdir(d):
+        return d
+    return os.path.join(os.path.dirname(BASE_DIR), 'src')
+
+
+# GiS 研究週報放在專案上層目錄（與專案資料夾同層的 GiS_*.html）
+_GIS_DIR = os.path.dirname(BASE_DIR)
+
 
 @app.route('/research')
 def research_list():
@@ -227,18 +238,14 @@ def weekly():
     """研究週報頁面 — 自動彙整量化研究與科技研究週報。"""
     import glob, re
 
-    base_src = os.environ.get('RESEARCH_SRC_DIR', '')
-    if not base_src or not os.path.isdir(base_src):
-        base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
-    if not os.path.isdir(base_src):
-        base_src = r'D:\claude\src'
+    base_src = _weekly_src_dir()
 
     fin_lab = os.path.join(base_src, 'fin-lab')
     tech_research = os.path.join(base_src, 'tech-research')
 
-    # ── 0. GiS 研究週報（D:\claude\GiS_研究週報_*.html / GiS_*.html）
+    # ── 0. GiS 研究週報（專案上層目錄的 GiS_研究週報_*.html / GiS_*.html）
     gis_reports = []
-    gis_dir = os.path.join(os.path.dirname(__file__), '..')
+    gis_dir = _GIS_DIR
     if os.path.isdir(gis_dir):
         for pattern in ['GiS_研究週報_*.html', 'GiS_*.html']:
             for f in sorted(glob.glob(os.path.join(gis_dir, pattern)), reverse=True):
@@ -423,11 +430,7 @@ def weekly():
 def api_weekly_report(filepath):
     """動態載入週報 HTML 內容。"""
     import re
-    base_src = os.environ.get('RESEARCH_SRC_DIR', '')
-    if not base_src or not os.path.isdir(base_src):
-        base_src = os.path.join(os.path.dirname(__file__), '..', 'src')
-    if not os.path.isdir(base_src):
-        base_src = r'D:\claude\src'
+    base_src = _weekly_src_dir()
 
     # 安全檢查
     if '..' in filepath:
@@ -438,7 +441,7 @@ def api_weekly_report(filepath):
         fname = filepath[4:]
         if not re.match(r'^GiS[\w\-\u4e00-\u9fff]+\.html$', fname):
             return 'Invalid', 400
-        gis_dir = os.path.join(os.path.dirname(__file__), '..')
+        gis_dir = _GIS_DIR
         full_path = os.path.join(gis_dir, fname)
         allowed_root = gis_dir
     # fin-lab 週報

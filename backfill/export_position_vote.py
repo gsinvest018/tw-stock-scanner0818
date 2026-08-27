@@ -1,7 +1,7 @@
 """把 position-vote 用到的八指標匯出成 CSV，並打包成 7z 給對方。
 
-輸出位置: d:/claude/tw-stock-scanner/data/position_vote_export/
-壓縮檔  : d:/claude/tw-stock-scanner/data/position_vote_indicators_{YYYYMMDD}.7z
+輸出位置: <專案根>/data/position_vote_export/
+壓縮檔  : <專案根>/data/position_vote_indicators_{YYYYMMDD}.7z
 """
 import os
 import sys
@@ -18,8 +18,8 @@ from datetime import datetime
 
 from models.database import get_conn
 
-OUT_DIR = os.path.join(os.path.dirname(__file__), 'data', 'position_vote_export')
-ARCHIVE_DIR = os.path.join(os.path.dirname(__file__), 'data')
+OUT_DIR = os.path.join(_PROJECT_ROOT, 'data', 'position_vote_export')
+ARCHIVE_DIR = os.path.join(_PROJECT_ROOT, 'data')
 
 
 # ── breadth Layer 3 公式（複製自 scanners/breadth.py）──

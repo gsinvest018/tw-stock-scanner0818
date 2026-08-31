@@ -13,3 +13,8 @@ log/
 # 大型資料包與爬蟲除錯樣本：留在本機、不進版控
 data.7z
 debug_broker.html
+
+# 每日自動重寫的快取檔：留在本機、不進版控（種子檔 margin_cost_seed.json 仍追蹤）
+data/margin_cost_live.json
+data/margin_snapshots/
+data/deleveraging_snapshot.json
